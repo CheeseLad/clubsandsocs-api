@@ -9,7 +9,14 @@ def scrape_events(site, society):
   r = requests.get(url=URL, headers=headers) 
   soup = BeautifulSoup(r.content, 'html5lib')
   events_data = soup.find('div', attrs = {'id':'events'})
-  event_count = events_data.find('span', attrs = {'class':'float-right badge badge-light'}).text
+  try:
+    event_count = int(events_data.find('span', attrs = {'class':'float-right badge badge-light'}).text)
+  except:
+    event_count = 0
+  if event_count == 0:
+    data['event_count'] = event_count
+    data['events'] = None
+    return data
   event_table = events_data.find('div', attrs = {'class':'table-responsive'})
   events_info_list = event_table.find_all('tr', attrs={'class':'show_info pointer'})
   events_info_hidden = event_table.find_all('tr', attrs={'class':'d-none'})
