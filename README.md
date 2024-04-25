@@ -6,7 +6,7 @@ Allows you to get information about societies and clubs from university websites
 
 ## Supported Sites
 
-- [DCU Clubs & Societies](https://dcuclubsandsocs.ie)
+- [DCU Clubs & Socs](https://dcuclubsandsocs.ie)
   - Site Code: `dcuclubsandsocs.ie`
 - [MU Clubs & Societies](https://mulife.ie/)
   - Site Code: `mulife.ie`

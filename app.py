@@ -4,7 +4,7 @@ from scraper import *
 
 app = Flask(__name__)
 api = Api(app, version='1.0', title='Clubs & Socs API',
-          description='Allows easy retrieval of event and committee information.')
+          description='Allows you to get information about societies and clubs from university websites using the Assure Memberships Platform for use in other applications.')
 
 @api.route('/<site>/<society>/events')
 class EventResource(Resource):
