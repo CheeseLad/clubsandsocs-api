@@ -1,0 +1,5 @@
+flask
+flask-restx
+bs4
+requests
+html5lib
