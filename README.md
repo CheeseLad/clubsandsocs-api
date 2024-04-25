@@ -22,12 +22,12 @@ Allows you to get information about societies and clubs from university websites
 
 The API has the following endpoints:
 
-- `/<site>/<society>/events` - Get all events for a society/club
+- `/<site>/<society>/events` - Get all upcoming events for a society/club
 - `/<site>/<society>/committee` - Get the committee information for a society/club
 - `/<site>/<society>/gallery` - Get the gallery photos for a society/club
 
 ## Example
 
-- `/dcuclubsandsocs.ie/redbrick/events` - Get all events for Redbrick
-- `/mulife.ie/esn/committee` - Get the committee information for the Rowing Club
-- `/dcuclubsandsocs.ie/media-production/gallery` - Get the gallery photos for the Media Production Society
+- `/dcuclubsandsocs.ie/redbrick/events` - Get all upcoming events for Redbrick Society in DCU
+- `/mulife.ie/esn/committee` - Get the committee information for the Erasmus Student Network Society in Maynooth University
+- `/dcuclubsandsocs.ie/media-production/gallery` - Get the gallery photos for the Media Production Society in DCU
