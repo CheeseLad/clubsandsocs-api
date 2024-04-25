@@ -12,6 +12,8 @@ def scrape_events(site, society):
   event_count = events_data.find('span', attrs = {'class':'float-right badge badge-light'}).text
   event_table = events_data.find('div', attrs = {'class':'table-responsive'})
   events_info_list = event_table.find_all('tr', attrs={'class':'show_info pointer'})
+  events_info_hidden = event_table.find_all('tr', attrs={'class':'d-none'})
+
   for i in range(0, len(events_info_list) - 1, 2):
     event_info = events_info_list[i]
     try:
@@ -20,6 +22,7 @@ def scrape_events(site, society):
       event_image = None
     event_name = event_info.find('th', attrs={'class': 'h5 align-middle'}).text.strip()
     events[i // 2] = {'name': event_name, 'image': event_image}
+
   for i in range(1, len(events_info_list), 2):
     event_info = events_info_list[i]
     event_data = event_info.find_all('td', attrs={'class': 'text-center align-middle'})
@@ -28,6 +31,9 @@ def scrape_events(site, society):
     events[i // 2]['cost'] = event_data[3].find('b').text
     events[i // 2]['capacity'] = event_data[4].find('b').text
     events[i // 2]['type'] = event_data[5].find('b').text
+    events[i // 2]['location'] = events_info_hidden[i].find('b').text
+    events[i // 2]['description'] = events_info_hidden[i].find('p').text
+    
   data['event_count'] = event_count
   data['events'] = events                                                                                           
   return data
