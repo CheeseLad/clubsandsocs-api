@@ -10,6 +10,14 @@ Allows you to get information about societies and clubs from university websites
   - Site Code: `dcuclubsandsocs.ie`
 - [MU Clubs & Societies](https://mulife.ie/)
   - Site Code: `mulife.ie`
+- [SETU Waterford Sports Clubs & Societies](https://waterford.sportsclubsandsocieties.setu.ie/)
+  - Site Code: `waterford.sportsclubsandsocieties.setu.ie`
+- [UL Clubs & Societies](https://ulwolves.ie/)
+  - Site Code: `ulwolves.ie`
+- [ATU Sligo Clubs & Socs](https://sligo.atusulife.ie/)
+  - Site Code: `sligo.atusulife.ie`
+- [ATU Donegal Clubs & Socs](https://donegal.atusulife.ie/)
+  - Site Code: `donegal.atusulife.ie`
   
 
 ## Installation
