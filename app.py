@@ -6,23 +6,29 @@ app = Flask(__name__)
 api = Api(app, version='1.0', title='Clubs & Socs API',
           description='Allows you to get information about societies and clubs from university websites using the Assure Memberships Platform for use in other applications.')
 
-@api.route('/<site>/<society>/events')
+@api.route('/<site>/<type>/<society>/events')
 class EventResource(Resource):
-    def get(self, site, society):
+    def get(self, site, society, type):
         """Get all events for a society"""
-        return scrape_events(site, society)
+        return scrape_events(site, society, type)
     
-@api.route('/<site>/<society>/committee')
+@api.route('/<site>/<type>/<society>/committee')
 class CommitteeResource(Resource):
-    def get(self, site, society):
+    def get(self, site, society, type):
         """Get the committee information for a society"""
-        return scrape_committee(site, society)
+        return scrape_committee(site, society, type)
     
-@api.route('/<site>/<society>/gallery')
+@api.route('/<site>/<type>/<society>/gallery')
 class GalleryResource(Resource):
-    def get(self, site, society):
+    def get(self, site, society, type):
         """Get the gallery photos for a society"""
-        return scrape_gallery(site, society)
+        return scrape_gallery(site, society, type)
+    
+@api.route('/<site>/<type>/<society>/activities')
+class ActivitiesResource(Resource):
+    def get(self, site, society, type):
+        """Get all weekly activities for a society"""
+        return scrape_activities(site, society, type)
 
 if __name__ == '__main__':
     app.run(debug=True)
