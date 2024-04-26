@@ -37,8 +37,9 @@ The API has the following endpoints:
 - `/<site>/<type>/<society>/events` - Get all upcoming events for a society/club
 - `/<site>/<type>/<society>/committee` - Get the committee information for a society/club
 - `/<site>/<type>/<society>/gallery` - Get the gallery photos for a society/club
+- `/<site>/<type>/<society>/activities` - Get all weekly activities for a society/club
 
-## Example
+## API Usage Examples
 
 - `/dcuclubsandsocs.ie/society/redbrick/events` - Get all upcoming events for Redbrick Society in DCU
 - `/mulife.ie/society/esn/committee` - Get the committee information for the Erasmus Student Network Society in Maynooth University
