@@ -1,8 +1,11 @@
 from flask import Flask
 from flask_restx import Api, Resource
+from flask_cors import CORS
 from scraper import *
 
 app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 api = Api(app, version='1.0', title='Clubs & Socs API',
           description='Allows you to get information about societies and clubs from university websites using the Assure Memberships Platform for use in other applications.')
 
