@@ -28,18 +28,18 @@ def scrape_events(site, society, type):
     except:
       event_image = None
     event_name = event_info.find('th', attrs={'class': 'h5 align-middle'}).text.strip()
-    events[i // 2] = {'name': event_name, 'image': event_image}
+    events["event_" + str(i // 2)] = {'name': event_name, 'image': event_image}
 
   for i in range(1, len(events_info_list), 2):
     event_info = events_info_list[i]
     event_data = event_info.find_all('td', attrs={'class': 'text-center align-middle'})
-    events[i // 2]['start'] = event_data[1].find('b').text
-    events[i // 2]['end'] = event_data[2].find('b').text
-    events[i // 2]['cost'] = event_data[3].find('b').text
-    events[i // 2]['capacity'] = event_data[4].find('b').text
-    events[i // 2]['type'] = event_data[5].find('b').text
-    events[i // 2]['location'] = events_info_hidden[i].find('b').text
-    events[i // 2]['description'] = events_info_hidden[i].find('p').text
+    events["event_" + str(i // 2)]['start'] = event_data[1].find('b').text
+    events["event_" + str(i // 2)]['end'] = event_data[2].find('b').text
+    events["event_" + str(i // 2)]['cost'] = event_data[3].find('b').text
+    events["event_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
+    events["event_" + str(i // 2)]['type'] = event_data[5].find('b').text
+    events["event_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
+    events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
     
   data['event_count'] = event_count
   data['events'] = events                                                                                           
@@ -104,18 +104,18 @@ def scrape_activities(site, society, type):
     except:
       event_image = None
     event_name = event_info.find('th', attrs={'class': 'h5 align-middle'}).text.strip()
-    events[i // 2] = {'name': event_name, 'image': event_image}
+    events["activity_" + str(i // 2)] = {'name': event_name, 'image': event_image}
 
   for i in range(1, len(events_info_list), 2):
     event_info = events_info_list[i]
     event_data = event_info.find_all('td', attrs={'class': 'text-center align-middle'})
-    events[i // 2]['day'] = event_data[1].find('b').text
-    events[i // 2]['start'] = event_data[2].find('b').text
-    events[i // 2]['end'] = event_data[3].find('b').text
-    events[i // 2]['capacity'] = event_data[4].find('b').text
-    events[i // 2]['type'] = event_data[5].find('b').text
-    events[i // 2]['location'] = events_info_hidden[i].find('b').text
-    events[i // 2]['description'] = events_info_hidden[i].find('p').text
+    events["activity_" + str(i // 2)]['day'] = event_data[1].find('b').text
+    events["activity_" + str(i // 2)]['start'] = event_data[2].find('b').text
+    events["activity_" + str(i // 2)]['end'] = event_data[3].find('b').text
+    events["activity_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
+    events["activity_" + str(i // 2)]['type'] = event_data[5].find('b').text
+    events["activity_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
+    events["activity_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
     
   data['activity_count'] = event_count
   data['activities'] = events                                                                                           
