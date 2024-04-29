@@ -60,13 +60,14 @@ def scrape_committee(site, society, type):
   data['committee_count'] = len(committee_names)
   i = 0
   for name, role in zip(committee_names, committee_roles):
-    committee_list[i] = {'position': name.text.strip(), 'name': role.text.strip()}
+    committee_list["committee_member" + str(i)] = {'name': role.text.strip(), 'position': name.text.strip()}
     i += 1
-  data['committee'] = committee_list
+  data['committee_list'] = committee_list
   return data
 
 def scrape_gallery(site, society, type):
   data = {}
+  image_list = {}
   URL = f"https://{site}/{type}/{society}"
   headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"} 
   r = requests.get(url=URL, headers=headers) 
@@ -74,7 +75,11 @@ def scrape_gallery(site, society, type):
   gallery = soup.find('div', attrs = {'class':'row photo_gallery mt-5 overflow-auto'})
   images = gallery.find_all('img')
   data['image_count'] = len(images)
-  data['images'] = [img['src'] for img in images]
+  i = 0
+  for img in images:
+    image_list['image_' + str(i)] = img['src']
+    i += 1
+  data['images'] = image_list
   return data
 
 def scrape_activities(site, society, type):
