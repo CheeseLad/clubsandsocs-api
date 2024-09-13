@@ -11,6 +11,6 @@ RUN pip install -r requirements.txt
 
 COPY . /usr/src/app/
 
-EXPOSE 5000
+EXPOSE 5001
 
 CMD ["python", "manage.py", "run", "-h", "0.0.0.0"]
