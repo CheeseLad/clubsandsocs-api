@@ -39,7 +39,7 @@ def scrape_events(site, society, type):
     events["event_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
     events["event_" + str(i // 2)]['type'] = event_data[5].find('b').text
     events["event_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
-    events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
+    events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p')
     
   data['event_count'] = event_count
   data['events'] = events                                                                                           
