@@ -4,4 +4,3 @@ bs4
 requests
 html5lib
 flask-cors
-gunicorn

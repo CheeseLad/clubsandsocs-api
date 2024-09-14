@@ -39,7 +39,9 @@ def scrape_events(site, society, type):
     events["event_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
     events["event_" + str(i // 2)]['type'] = event_data[5].find('b').text
     events["event_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
-    events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p')
+    #events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p')
+    description_tag = events_info_hidden[i].find('p')
+    events["event_" + str(i // 2)]['description'] = description_tag.text if description_tag else ''
     
   data['event_count'] = event_count
   data['events'] = events                                                                                           
@@ -120,7 +122,9 @@ def scrape_activities(site, society, type):
     events["activity_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
     events["activity_" + str(i // 2)]['type'] = event_data[5].find('b').text
     events["activity_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
-    events["activity_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
+    #events["activity_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
+    description_tag = events_info_hidden[i].find('p')
+    events["activity_" + str(i // 2)]['description'] = description_tag.text if description_tag else ''
     
   data['activity_count'] = event_count
   data['activities'] = events                                                                                           
