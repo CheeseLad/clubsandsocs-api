@@ -1,10 +1,10 @@
 services:
   clubsandsocs-api:
     build:
-      context: api
+      context: .
       dockerfile: Dockerfile
     container_name: clubsandsocs-api
     hostname: clubsandsocs-api
     ports:
-      - "5000:5000"
+      - "4000:4000"
     restart: unless-stopped

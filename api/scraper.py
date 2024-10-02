@@ -1,132 +1,302 @@
-import requests
-from bs4 import BeautifulSoup
+import dataclasses
+import datetime
+import enum
+import re
 
-def scrape_events(site, society, type):
-  data = {}
-  events = {}
-  URL = f"https://{site}/{type}/{society}"
-  headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"} 
-  r = requests.get(url=URL, headers=headers) 
-  soup = BeautifulSoup(r.content, 'html5lib')
-  events_data = soup.find('div', attrs = {'id':'events'})
-  try:
-    event_count = int(events_data.find('span', attrs = {'class':'float-right badge badge-light'}).text)
-  except:
-    event_count = 0
-  if event_count == 0:
-    data['event_count'] = event_count
-    data['events'] = None
-    return data
-  event_table = events_data.find('div', attrs = {'class':'table-responsive'})
-  events_info_list = event_table.find_all('tr', attrs={'class':'show_info pointer'})
-  events_info_hidden = event_table.find_all('tr', attrs={'class':'d-none'})
+import aiohttp
+from bs4 import BeautifulSoup, ResultSet, Tag
 
-  for i in range(0, len(events_info_list) - 1, 2):
-    event_info = events_info_list[i]
-    try:
-      event_image = event_info.find('img')['src']
-    except:
-      event_image = None
-    event_name = event_info.find('th', attrs={'class': 'h5 align-middle'}).text.strip()
-    events["event_" + str(i // 2)] = {'name': event_name, 'image': event_image}
-
-  for i in range(1, len(events_info_list), 2):
-    event_info = events_info_list[i]
-    event_data = event_info.find_all('td', attrs={'class': 'text-center align-middle'})
-    events["event_" + str(i // 2)]['start'] = event_data[1].find('b').text
-    events["event_" + str(i // 2)]['end'] = event_data[2].find('b').text
-    events["event_" + str(i // 2)]['cost'] = event_data[3].find('b').text
-    events["event_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
-    events["event_" + str(i // 2)]['type'] = event_data[5].find('b').text
-    events["event_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
-    #events["event_" + str(i // 2)]['description'] = events_info_hidden[i].find('p')
-    description_tag = events_info_hidden[i].find('p')
-    events["event_" + str(i // 2)]['description'] = description_tag.text if description_tag else ''
-    
-  data['event_count'] = event_count
-  data['events'] = events                                                                                           
-  return data
+from api import types, utils
 
 
+class GroupType(enum.Enum):
+    CLUB = "club"
+    SOCIETY = "society"
 
-def scrape_committee(site, society, type):
-  data = {}
-  committee_list = {}
-  URL = f"https://{site}/{type}/{society}"
-  headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"} 
-  r = requests.get(url=URL, headers=headers) 
-  soup = BeautifulSoup(r.content, 'html5lib')
-  committee_table = soup.find('div', attrs = {'id':'committee_table'})
-  committee_names = committee_table.find_all('th')
-  committee_roles = committee_table.find_all('td')
-  data['committee_count'] = len(committee_names)
-  i = 0
-  for name, role in zip(committee_names, committee_roles):
-    committee_list["committee_member" + str(i)] = {'name': role.text.strip(), 'position': name.text.strip()}
-    i += 1
-  data['committee_list'] = committee_list
-  return data
 
-def scrape_gallery(site, society, type):
-  data = {}
-  image_list = {}
-  URL = f"https://{site}/{type}/{society}"
-  headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"} 
-  r = requests.get(url=URL, headers=headers) 
-  soup = BeautifulSoup(r.content, 'html5lib')
-  gallery = soup.find('div', attrs = {'class':'row photo_gallery mt-5 overflow-auto'})
-  images = gallery.find_all('img')
-  data['image_count'] = len(images)
-  i = 0
-  for img in images:
-    image_list['image_' + str(i)] = img['src']
-    i += 1
-  data['images'] = image_list
-  return data
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:130.0) Gecko/20100101 Firefox/130.0"
+}
+CLUB_SOC_PATH = "{site}/{type}/{name}"
 
-def scrape_activities(site, society, type):
-  data = {}
-  events = {}
-  URL = f"https://{site}/{type}/{society}"
-  headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/119.0"} 
-  r = requests.get(url=URL, headers=headers) 
-  soup = BeautifulSoup(r.content, 'html5lib')
-  events_data = soup.find('div', attrs = {'id':'activities'})
-  try:
-    event_count = int(events_data.find('span', attrs = {'class':'float-right badge badge-light'}).text)
-  except:
-    event_count = 0
-  if event_count == 0:
-    data['activity_count'] = event_count
-    data['activities'] = None
-    return data
-  event_table = events_data.find('div', attrs = {'class':'table-responsive'})
-  events_info_list = event_table.find_all('tr', attrs={'class':'show_info pointer'})
-  events_info_hidden = event_table.find_all('tr', attrs={'class':'d-none'})
 
-  for i in range(0, len(events_info_list) - 1, 2):
-    event_info = events_info_list[i]
-    try:
-      event_image = event_info.find('img')['src']
-    except:
-      event_image = None
-    event_name = event_info.find('th', attrs={'class': 'h5 align-middle'}).text.strip()
-    events["activity_" + str(i // 2)] = {'name': event_name, 'image': event_image}
+@dataclasses.dataclass
+class Event:
+    name: str
+    image: str | None
+    start: datetime.datetime
+    end: datetime.datetime
+    cost: float
+    capacity: int
+    type: str
+    location: str
+    description: str
 
-  for i in range(1, len(events_info_list), 2):
-    event_info = events_info_list[i]
-    event_data = event_info.find_all('td', attrs={'class': 'text-center align-middle'})
-    events["activity_" + str(i // 2)]['day'] = event_data[1].find('b').text
-    events["activity_" + str(i // 2)]['start'] = event_data[2].find('b').text
-    events["activity_" + str(i // 2)]['end'] = event_data[3].find('b').text
-    events["activity_" + str(i // 2)]['capacity'] = event_data[4].find('b').text
-    events["activity_" + str(i // 2)]['type'] = event_data[5].find('b').text
-    events["activity_" + str(i // 2)]['location'] = events_info_hidden[i].find('b').text
-    #events["activity_" + str(i // 2)]['description'] = events_info_hidden[i].find('p').text
-    description_tag = events_info_hidden[i].find('p')
-    events["activity_" + str(i // 2)]['description'] = description_tag.text if description_tag else ''
-    
-  data['activity_count'] = event_count
-  data['activities'] = events                                                                                           
-  return data
 
+@dataclasses.dataclass
+class Activity:
+    name: str
+    image: str | None
+    day: str
+    start: datetime.datetime
+    end: datetime.datetime
+    capacity: int
+    type: str
+    location: str
+    description: str
+
+
+@dataclasses.dataclass
+class CommitteeMember:
+    name: str
+    position: str
+
+
+@dataclasses.dataclass
+class ClubSoc:
+    id: str
+    name: str
+    is_locked: bool
+
+
+class Scraper:
+    def __init__(self) -> None:
+        self._session: aiohttp.ClientSession | None = None
+
+    @property
+    def session(self) -> aiohttp.ClientSession:
+        if not self._session:
+            self._session = aiohttp.ClientSession()
+
+        return self._session
+
+    async def get(self, url: str) -> bytes:
+        async with self.session.request(
+            "GET",
+            f"https://{url}",
+        ) as r:
+            r.raise_for_status()
+            return await r.read()
+
+    async def fetch_group(self, site: str, group_type: GroupType) -> list[ClubSoc]:
+        data = await self.get(
+            site,
+        )
+        soup = BeautifulSoup(data, "html5lib")
+        results = soup.find_all(
+            "a",
+            href=re.compile(
+                r"{site}\/{group}\/.+".format(site=site, group=group_type.value)
+            ),
+        )
+
+        clubsocs: list[ClubSoc] = []
+        for res in results:
+            if not res.get("title"):
+                continue
+
+            name = res["title"]
+            locked = name.endswith("(awaiting committee unlock)")
+            if locked:
+                name = name.replace("(awaiting committee unlock)", "").strip()
+
+            match = re.search(
+                r"\/{group}\/(?P<id>.+)".format(group=group_type.value), res["href"]
+            )
+            if not match or not (id := match.group("id")):
+                raise ValueError(f"could not get {group_type.value} id for '{name}'")
+
+            clubsocs.append(
+                ClubSoc(
+                    id=id,
+                    name=name,
+                    is_locked=locked,
+                )
+            )
+
+        return clubsocs
+
+    # TODO: use enum for event type
+    async def _fetch_events_activities(
+        self, site: str, name: str, group_type: GroupType, event_type: str
+    ) -> list[Activity | Event]:
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+        )
+
+        soup = BeautifulSoup(data, "html5lib")
+        events_data = soup.find("div", attrs={"id": event_type})
+
+        if not events_data:
+            return []
+
+        assert isinstance(events_data, Tag)
+
+        event_count = events_data.find(
+            "span", attrs={"class": "float-right badge badge-light"}
+        )
+        assert event_count is not None
+        event_count = int(event_count.text)
+
+        if event_count < 1:
+            return []
+
+        event_table = events_data.find("div", attrs={"class": "table-responsive"})
+        assert isinstance(event_table, Tag)
+
+        events_info_list: ResultSet[Tag] = event_table.find_all(
+            "tr", attrs={"class": "show_info pointer"}
+        )
+        events_info_hidden: ResultSet[Tag] = event_table.find_all(
+            "tr", attrs={"class": "d-none"}
+        )
+        assert events_info_list is not None and events_info_hidden is not None
+
+        events: list[Activity | Event] = []
+        i = 0
+        while i < len(events_info_list):
+            event_info = events_info_list[i]
+
+            event_image = event_info.find("img")
+            assert isinstance(event_image, Tag | None)
+            if event_image is not None:
+                event_image = event_image["src"]
+                if isinstance(event_image, list):
+                    event_image = event_image[0]
+
+            event_name = event_info.find("th", attrs={"class": "h5 align-middle"})
+            assert isinstance(event_name, Tag)
+            event_name = event_name.text.strip()
+
+            i += 1
+
+            event_info = events_info_list[i]
+            event_data: ResultSet[Tag] = event_info.find_all(
+                "td", attrs={"class": "text-center align-middle"}
+            )
+
+            def get_info(edata: ResultSet[Tag], index: int) -> str:
+                d = edata[index].find("b")
+                assert d is not None
+                return d.text
+
+            capacity = get_info(event_data, 4)
+            type = get_info(event_data, 5)
+            location = get_info(events_info_hidden, i)
+
+            description_tag = events_info_hidden[i].find("p")
+            description = (
+                description_tag.text.replace("\xa0", "") if description_tag else ""
+            )
+
+            if event_type == "activities":
+                day = get_info(event_data, 1)[:-1]
+                upcoming_date = utils.str_to_datetime(day)
+                start = utils.str_to_datetime(get_info(event_data, 2), upcoming_date)
+                end = utils.str_to_datetime(get_info(event_data, 3), upcoming_date)
+
+                events.append(
+                    Activity(
+                        name=event_name,
+                        image=event_image,
+                        day=day,
+                        start=start,
+                        end=end,
+                        capacity=int(capacity),
+                        type=type,
+                        location=location,
+                        description=description,
+                    )
+                )
+            else:
+                start = utils.str_to_datetime(get_info(event_data, 1))
+                end = utils.str_to_datetime(get_info(event_data, 2), start)
+                cost = get_info(event_data, 3)
+
+                if cost == "FREE":
+                    cost = 0
+                else:
+                    match = re.search(r"[0-9\.]+", cost)
+                    assert match
+                    cost = float(match.group())
+
+                events.append(
+                    Event(
+                        name=event_name,
+                        image=event_image,
+                        start=start,
+                        end=end,
+                        cost=cost,
+                        capacity=int(capacity),
+                        type=type,
+                        location=location,
+                        description=description,
+                    )
+                )
+
+            i += 1
+
+        return events
+
+    async def fetch_committee(
+        self, site: str, name: str, group_type: GroupType
+    ) -> list[CommitteeMember]:
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+        )
+
+        soup = BeautifulSoup(data, "html5lib")
+        committee_table = soup.find("div", attrs={"id": "committee_table"})
+        assert isinstance(committee_table, Tag)
+        committee_names: ResultSet[Tag] = committee_table.find_all("th")
+        committee_roles: ResultSet[Tag] = committee_table.find_all("td")
+
+        committee: list[CommitteeMember] = []
+        for name_, role in zip(committee_names, committee_roles):
+            committee.append(
+                CommitteeMember(
+                    name=name_.text.strip(),
+                    position=role.text.strip(),
+                )
+            )
+
+        return committee
+
+    async def fetch_gallery(
+        self, site: str, name: str, group_type: GroupType
+    ) -> list[str]:
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+        )
+        soup = BeautifulSoup(data, "html5lib")
+        gallery = soup.find(
+            "div", attrs={"class": "row photo_gallery mt-5 overflow-auto"}
+        )
+        assert isinstance(gallery, Tag)
+        images: ResultSet[Tag] = gallery.find_all("img")
+
+        urls: list[str] = []
+        for img in images:
+            img = img["src"]
+            if isinstance(img, list):
+                urls.append(img[0])
+            else:
+                urls.append(img)
+
+        return urls
+
+    async def fetch_activities(
+        self, site: str, name: str, group_type: GroupType
+    ) -> list[Activity]:
+        activities = await self._fetch_events_activities(
+            site, name, group_type, "activities"
+        )
+        assert types.is_obj_list(activities, Activity)
+        return activities
+
+    async def fetch_events(
+        self, site: str, name: str, group_type: GroupType
+    ) -> list[Event]:
+        events = await self._fetch_events_activities(site, name, group_type, "events")
+        assert types.is_obj_list(events, Event)
+        return events
