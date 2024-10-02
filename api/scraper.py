@@ -18,6 +18,7 @@ HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:130.0) Gecko/20100101 Firefox/130.0"
 }
 CLUB_SOC_PATH = "{site}/{type}/{name}"
+WHITESPACE_REGEX = re.compile(r"^\s+|\s+$|\s+(?=\s)")
 
 
 @dataclasses.dataclass
@@ -57,6 +58,11 @@ class ClubSoc:
     id: str
     name: str
     is_locked: bool
+
+
+@dataclasses.dataclass
+class Info:
+    info: str
 
 
 class Scraper:
@@ -117,6 +123,7 @@ class Scraper:
         return clubsocs
 
     # TODO: use enum for event type
+    # TODO: use 'id' instead of 'name' for parameter
     async def _fetch_events_activities(
         self, site: str, name: str, group_type: GroupType, event_type: str
     ) -> list[Activity | Event]:
@@ -184,9 +191,14 @@ class Scraper:
             type = get_info(event_data, 5)
             location = get_info(events_info_hidden, i)
 
-            description_tag = events_info_hidden[i].find("p")
-            description = (
-                description_tag.text.replace("\xa0", "") if description_tag else ""
+            description_tags: ResultSet[Tag] = events_info_hidden[i].findAll("p")
+            description = "\n\n".join(
+                [
+                    re.sub(
+                        WHITESPACE_REGEX, "", description_tag.text.replace("\xa0", "")
+                    )
+                    for description_tag in description_tags
+                ]
             )
 
             if event_type == "activities":
@@ -300,3 +312,23 @@ class Scraper:
         events = await self._fetch_events_activities(site, name, group_type, "events")
         assert types.is_obj_list(events, Event)
         return events
+
+    async def fetch_info(
+        self,
+        site: str,
+        name: str,
+        group_type: GroupType,
+    ) -> Info:
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+        )
+        soup = BeautifulSoup(data, "html5lib")
+
+        table = soup.find("div", attrs={"id": "about_table"})
+        assert isinstance(table, Tag)
+        container = table.find("div", attrs={"class": "card-body"})
+        assert isinstance(container, Tag)
+        about_div = container.find("div")
+        assert isinstance(about_div, Tag)
+
+        return Info(info=about_div.text)

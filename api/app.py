@@ -2,7 +2,15 @@ from typing import Annotated, TypeAlias
 
 from fastapi import FastAPI, Path
 
-from api.scraper import Activity, ClubSoc, CommitteeMember, Event, GroupType, Scraper
+from api.scraper import (
+    Activity,
+    ClubSoc,
+    CommitteeMember,
+    Event,
+    GroupType,
+    Info,
+    Scraper,
+)
 
 app = FastAPI(
     version="2.0",
@@ -75,3 +83,8 @@ async def get_group_items(
     type: TYPE_PARAM,
 ) -> list[ClubSoc]:
     return await scraper.fetch_group(site, type)
+
+
+@app.get("/{site}/{type}/{id}", summary="Get info about a club or society.")
+async def get_info(site: SITE_PARAM, type: TYPE_PARAM, id: ID_PARAM) -> Info:
+    return await scraper.fetch_info(site, id, type)
