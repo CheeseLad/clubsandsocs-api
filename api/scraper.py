@@ -21,9 +21,9 @@ class GroupType(enum.Enum):
 class EventType(enum.Enum):
     """The event type."""
 
-    ACTIVITY = "activity"
+    ACTIVITY = "activities"
     """An activity."""
-    EVENT = "event"
+    EVENT = "events"
     """An event."""
 
 
@@ -186,7 +186,7 @@ class Scraper:
         )
 
         soup = BeautifulSoup(data, "html5lib")
-        events_data = soup.find("div", attrs={"id": event_type})
+        events_data = soup.find("div", attrs={"id": event_type.value})
 
         if not events_data:
             return []
