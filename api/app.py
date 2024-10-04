@@ -1,4 +1,5 @@
-from typing import Annotated, TypeAlias
+from contextlib import asynccontextmanager
+from typing import Annotated, AsyncGenerator, TypeAlias
 
 from fastapi import FastAPI, Path
 
@@ -12,13 +13,24 @@ from api.scraper import (
     Scraper,
 )
 
+scraper = Scraper()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    yield
+    # Close session on shutdown
+    await scraper.session.close()
+
+
 app = FastAPI(
     version="2.0",
     title="Clubs & Societies API",
     description="API to fetch information about clubs and societies from university websites using the Assure Memberships Platform.",
     docs_url="/",
+    lifespan=lifespan,
 )
-scraper = Scraper()
+
 
 SITE_PARAM: TypeAlias = Annotated[
     str,
