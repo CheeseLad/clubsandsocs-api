@@ -1,15 +1,36 @@
-from typing import Annotated, TypeAlias
+from contextlib import asynccontextmanager
+from typing import Annotated, AsyncGenerator, TypeAlias
 
 from fastapi import FastAPI, Path
 
-from api.scraper import Activity, ClubSoc, CommitteeMember, Event, GroupType, Scraper
+from api.scraper import (
+    Activity,
+    ClubSoc,
+    CommitteeMember,
+    Event,
+    GroupType,
+    Info,
+    Scraper,
+)
+
+scraper = Scraper()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    yield
+    # Close session on shutdown
+    await scraper.session.close()
+
 
 app = FastAPI(
     version="2.0",
     title="Clubs & Societies API",
     description="API to fetch information about clubs and societies from university websites using the Assure Memberships Platform.",
+    docs_url="/",
+    lifespan=lifespan,
 )
-scraper = Scraper()
+
 
 SITE_PARAM: TypeAlias = Annotated[
     str,
@@ -75,3 +96,8 @@ async def get_group_items(
     type: TYPE_PARAM,
 ) -> list[ClubSoc]:
     return await scraper.fetch_group(site, type)
+
+
+@app.get("/{site}/{type}/{id}", summary="Get info about a club or society.")
+async def get_info(site: SITE_PARAM, type: TYPE_PARAM, id: ID_PARAM) -> Info:
+    return await scraper.fetch_info(site, id, type)

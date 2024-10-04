@@ -1,5 +1,6 @@
 import datetime
 import enum
+import re
 
 import parsedatetime
 
@@ -12,6 +13,11 @@ class TimePeriod(enum.Enum):
 
 
 PARSER = parsedatetime.Calendar(parsedatetime.Constants("en_GB"))
+WHITESPACE_REGEX = re.compile(r"^\s+|\s+$|\s+(?=\s)")
+
+
+def strip_whitespace(text: str) -> str:
+    return re.sub(WHITESPACE_REGEX, "", text.replace("\xa0", " "))
 
 
 def str_to_datetime(
