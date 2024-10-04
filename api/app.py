@@ -16,6 +16,7 @@ app = FastAPI(
     version="2.0",
     title="Clubs & Societies API",
     description="API to fetch information about clubs and societies from university websites using the Assure Memberships Platform.",
+    docs_url="/",
 )
 scraper = Scraper()
 

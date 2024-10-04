@@ -10,59 +10,111 @@ from api import types, utils
 
 
 class GroupType(enum.Enum):
+    """The group type."""
+
     CLUB = "club"
+    """A club."""
     SOCIETY = "society"
+    """A society."""
+
+
+class EventType(enum.Enum):
+    """The event type."""
+
+    ACTIVITY = "activity"
+    """An activity."""
+    EVENT = "event"
+    """An event."""
 
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; rv:130.0) Gecko/20100101 Firefox/130.0"
 }
-CLUB_SOC_PATH = "{site}/{type}/{name}"
-WHITESPACE_REGEX = re.compile(r"^\s+|\s+$|\s+(?=\s)")
+CLUB_SOC_PATH = "{site}/{type}/{id}"
 
 
 @dataclasses.dataclass
 class Event:
+    """An event."""
+
     name: str
+    """The event name."""
     image: str | None
+    """The event poster."""
     start: datetime.datetime
+    """The event's start time."""
     end: datetime.datetime
+    """The event's end time."""
     cost: float
-    capacity: int
+    """The event cost."""
+    capacity: int | None
+    """The event maximum capacity."""
     type: str
-    location: str
+    """The event type. Usually `IN-PERSON` or `VIRTUAL`."""
+    location: str | None
+    """The event location."""
     description: str
+    """The event description."""
 
 
 @dataclasses.dataclass
 class Activity:
+    """A weekly activity."""
+
     name: str
+    """The activity name."""
     image: str | None
+    """The activity poster."""
     day: str
+    """The day the activity is on (`monday`, `tuesday`, etc.)."""
     start: datetime.datetime
+    """The activity start time."""
     end: datetime.datetime
-    capacity: int
+    """The activity end time."""
+    capacity: int | None
+    """The activity maximum capacity."""
     type: str
-    location: str
+    """The activity type. Usually `IN-PERSON` or `VIRTUAL`."""
+    location: str | None
+    """The activity location."""
     description: str
+    """The activity description."""
 
 
 @dataclasses.dataclass
 class CommitteeMember:
-    name: str
+    """A committee member."""
+
+    name: str | None
+    """Their name. (`None` if hidden)."""
     position: str
+    """Their committee position."""
 
 
 @dataclasses.dataclass
 class ClubSoc:
+    """A club or society."""
+
     id: str
+    """The ID used in the club or society's page URL."""
     name: str
+    """The club or society name."""
     is_locked: bool
+    """Whether the club or society is locked."""
 
 
 @dataclasses.dataclass
 class Info:
-    info: str
+    """Info on a club or society."""
+
+    name: str
+    """The club or society name."""
+    icon: str | None
+    """The club or society icon."""
+    title: str
+    """The club or society title."""
+    about: str | None
+    """Info on the club or society."""
 
 
 class Scraper:
@@ -71,12 +123,14 @@ class Scraper:
 
     @property
     def session(self) -> aiohttp.ClientSession:
+        """The aiohttp ClientSession to use for requests."""
         if not self._session:
             self._session = aiohttp.ClientSession()
 
         return self._session
 
     async def get(self, url: str) -> bytes:
+        """Make a `GET` request to `url`."""
         async with self.session.request(
             "GET",
             f"https://{url}",
@@ -85,6 +139,7 @@ class Scraper:
             return await r.read()
 
     async def fetch_group(self, site: str, group_type: GroupType) -> list[ClubSoc]:
+        """Fetch items items belonging to a group (clubs or societies)."""
         data = await self.get(
             site,
         )
@@ -122,13 +177,12 @@ class Scraper:
 
         return clubsocs
 
-    # TODO: use enum for event type
-    # TODO: use 'id' instead of 'name' for parameter
     async def _fetch_events_activities(
-        self, site: str, name: str, group_type: GroupType, event_type: str
+        self, site: str, id: str, group_type: GroupType, event_type: EventType
     ) -> list[Activity | Event]:
+        """Fetch events or activities for a club or society."""
         data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
         )
 
         soup = BeautifulSoup(data, "html5lib")
@@ -176,54 +230,66 @@ class Scraper:
             event_name = event_name.text.strip()
 
             i += 1
-
             event_info = events_info_list[i]
             event_data: ResultSet[Tag] = event_info.find_all(
                 "td", attrs={"class": "text-center align-middle"}
             )
 
-            def get_info(edata: ResultSet[Tag], index: int) -> str:
-                d = edata[index].find("b")
-                assert d is not None
-                return d.text
+            def get_info(edata: ResultSet[Tag], name: str) -> str | None:
+                for tag in edata:
+                    if name in tag.text.lower():
+                        d = tag.find("b")
+                        assert d is not None
+                        return d.text
 
-            capacity = get_info(event_data, 4)
-            type = get_info(event_data, 5)
-            location = get_info(events_info_hidden, i)
+            capacity = get_info(event_data, "max")
+            location = get_info(events_info_hidden, "location")
 
             description_tags: ResultSet[Tag] = events_info_hidden[i].findAll("p")
             description = "\n\n".join(
                 [
-                    re.sub(
-                        WHITESPACE_REGEX, "", description_tag.text.replace("\xa0", "")
-                    )
+                    utils.strip_whitespace(description_tag.text)
                     for description_tag in description_tags
                 ]
             )
 
-            if event_type == "activities":
-                day = get_info(event_data, 1)[:-1]
-                upcoming_date = utils.str_to_datetime(day)
-                start = utils.str_to_datetime(get_info(event_data, 2), upcoming_date)
-                end = utils.str_to_datetime(get_info(event_data, 3), upcoming_date)
+            start_str = get_info(event_data, "start")
+            assert start_str is not None
+            end_str = get_info(event_data, "end")
+            assert end_str is not None
+
+            if event_type is EventType.ACTIVITY:
+                type = get_info(event_data, "activity")
+                assert type is not None
+
+                day = get_info(event_data, "day")
+                assert day is not None
+                upcoming_date = utils.str_to_datetime(day[:-1])
+
+                start = utils.str_to_datetime(start_str, upcoming_date)
+                end = utils.str_to_datetime(end_str, upcoming_date)
 
                 events.append(
                     Activity(
                         name=event_name,
                         image=event_image,
-                        day=day,
+                        day=day[:-1].lower(),
                         start=start,
                         end=end,
-                        capacity=int(capacity),
+                        capacity=int(capacity) if capacity is not None else capacity,
                         type=type,
                         location=location,
                         description=description,
                     )
                 )
             else:
-                start = utils.str_to_datetime(get_info(event_data, 1))
-                end = utils.str_to_datetime(get_info(event_data, 2), start)
-                cost = get_info(event_data, 3)
+                type = get_info(event_data, "event")
+                assert type is not None
+
+                start = utils.str_to_datetime(start_str)
+                end = utils.str_to_datetime(end_str, start)
+                cost = get_info(event_data, "cost")
+                assert cost is not None
 
                 if cost == "FREE":
                     cost = 0
@@ -239,7 +305,7 @@ class Scraper:
                         start=start,
                         end=end,
                         cost=cost,
-                        capacity=int(capacity),
+                        capacity=int(capacity) if capacity is not None else capacity,
                         type=type,
                         location=location,
                         description=description,
@@ -251,23 +317,26 @@ class Scraper:
         return events
 
     async def fetch_committee(
-        self, site: str, name: str, group_type: GroupType
+        self, site: str, id: str, group_type: GroupType
     ) -> list[CommitteeMember]:
+        """Fetch committee members for a club or society."""
         data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
         )
 
         soup = BeautifulSoup(data, "html5lib")
         committee_table = soup.find("div", attrs={"id": "committee_table"})
         assert isinstance(committee_table, Tag)
-        committee_names: ResultSet[Tag] = committee_table.find_all("th")
-        committee_roles: ResultSet[Tag] = committee_table.find_all("td")
+        committee_roles: ResultSet[Tag] = committee_table.find_all("th")
+        committee_names: ResultSet[Tag] = committee_table.find_all("td")
 
         committee: list[CommitteeMember] = []
-        for name_, role in zip(committee_names, committee_roles):
+        for role, name_ in zip(committee_roles, committee_names):
             committee.append(
                 CommitteeMember(
-                    name=name_.text.strip(),
+                    name=None
+                    if (name := name_.text.strip()) == "(name hidden)"
+                    else name,
                     position=role.text.strip(),
                 )
             )
@@ -275,15 +344,19 @@ class Scraper:
         return committee
 
     async def fetch_gallery(
-        self, site: str, name: str, group_type: GroupType
+        self, site: str, id: str, group_type: GroupType
     ) -> list[str]:
+        """Fetch images in the gallery for a club or society."""
         data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
         )
         soup = BeautifulSoup(data, "html5lib")
         gallery = soup.find(
             "div", attrs={"class": "row photo_gallery mt-5 overflow-auto"}
         )
+        if not gallery:
+            return []
+
         assert isinstance(gallery, Tag)
         images: ResultSet[Tag] = gallery.find_all("img")
 
@@ -298,37 +371,80 @@ class Scraper:
         return urls
 
     async def fetch_activities(
-        self, site: str, name: str, group_type: GroupType
+        self, site: str, id: str, group_type: GroupType
     ) -> list[Activity]:
+        """Fetch activities for a club or society."""
         activities = await self._fetch_events_activities(
-            site, name, group_type, "activities"
+            site, id, group_type, EventType.ACTIVITY
         )
         assert types.is_obj_list(activities, Activity)
         return activities
 
     async def fetch_events(
-        self, site: str, name: str, group_type: GroupType
+        self, site: str, id: str, group_type: GroupType
     ) -> list[Event]:
-        events = await self._fetch_events_activities(site, name, group_type, "events")
+        """Fetch events for a club or society."""
+        events = await self._fetch_events_activities(
+            site, id, group_type, EventType.EVENT
+        )
         assert types.is_obj_list(events, Event)
         return events
 
     async def fetch_info(
         self,
         site: str,
-        name: str,
+        id: str,
         group_type: GroupType,
     ) -> Info:
+        """Fetch info on a club or society."""
         data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, name=name)
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
         )
         soup = BeautifulSoup(data, "html5lib")
+
+        name = soup.find("div", attrs={"class": "section-heading text-center pt-5"})
+        assert isinstance(name, Tag)
+        name = utils.strip_whitespace(name.text)
 
         table = soup.find("div", attrs={"id": "about_table"})
         assert isinstance(table, Tag)
         container = table.find("div", attrs={"class": "card-body"})
         assert isinstance(container, Tag)
-        about_div = container.find("div")
-        assert isinstance(about_div, Tag)
 
-        return Info(info=about_div.text)
+        about_div = container.find("div", attrs={"class": "mb-n2"})
+        if about_div:
+            assert isinstance(about_div, Tag)
+            about_div.decompose()
+
+        infos: ResultSet[Tag] = container.find_all(recursive=False)
+
+        info = "\n".join([tag.text for tag in infos])
+        info = utils.strip_whitespace(info)
+
+        section = soup.find("section", attrs={"class": "clearfix faded-bg"})
+        assert isinstance(section, Tag)
+
+        title = section.find("div", attrs={"class": "col-12 text-center"})
+        assert isinstance(title, Tag)
+        title = utils.strip_whitespace(title.text)
+
+        img_container = section.find(
+            "div", attrs={"class": "wow fadeInDown w-100 mb-3"}
+        )
+        if not img_container:
+            img = None
+        else:
+            assert isinstance(img_container, Tag)
+            img = img_container.find("img")
+            assert isinstance(img, Tag)
+
+            img = img["src"]
+            if isinstance(img, list):
+                img = img[0]
+
+        return Info(
+            name=name,
+            icon=img,
+            title=title,
+            about=info or None,
+        )
