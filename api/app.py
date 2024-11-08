@@ -13,6 +13,10 @@ from api.scraper import (
     Scraper,
 )
 
+from fastapi.middleware.cors import CORSMiddleware
+
+
+
 scraper = Scraper()
 
 
@@ -31,6 +35,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 SITE_PARAM: TypeAlias = Annotated[
     str,
@@ -101,3 +112,12 @@ async def get_group_items(
 @app.get("/{site}/{type}/{id}", summary="Get info about a club or society.")
 async def get_info(site: SITE_PARAM, type: TYPE_PARAM, id: ID_PARAM) -> Info:
     return await scraper.fetch_info(site, id, type)
+
+
+"""@app.get("/{site}/{type}/{id}/awards", summary="Get a club or society's list of awards.")
+async def get_awards(
+    site: SITE_PARAM,
+    type: TYPE_PARAM,
+    id: ID_PARAM,
+) -> list[str]:
+    return await scraper.fetch_awards(site, id, type)"""
