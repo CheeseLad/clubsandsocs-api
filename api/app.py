@@ -10,6 +10,8 @@ from api.scraper import (
     Event,
     GroupType,
     Info,
+    InfoLink,
+    InfoAward,
     Scraper,
 )
 
@@ -114,10 +116,18 @@ async def get_info(site: SITE_PARAM, type: TYPE_PARAM, id: ID_PARAM) -> Info:
     return await scraper.fetch_info(site, id, type)
 
 
-"""@app.get("/{site}/{type}/{id}/awards", summary="Get a club or society's list of awards.")
+@app.get("/{site}/{type}/{id}/awards", summary="Get a club or society's list of awards.")
 async def get_awards(
     site: SITE_PARAM,
     type: TYPE_PARAM,
     id: ID_PARAM,
-) -> list[str]:
-    return await scraper.fetch_awards(site, id, type)"""
+) -> list[InfoAward]:
+    return await scraper.fetch_awards(site, id, type)
+
+@app.get("/{site}/{type}/{id}/links", summary="Get a club or society's list of links.")
+async def get_links(
+    site: SITE_PARAM,
+    type: TYPE_PARAM,
+    id: ID_PARAM,
+) -> list[InfoLink]:
+    return await scraper.fetch_links(site, id, type)

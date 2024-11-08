@@ -102,6 +102,15 @@ class ClubSoc:
     is_locked: bool
     """Whether the club or society is locked."""
 
+@dataclasses.dataclass
+class InfoLink:
+    """A link in the club or society's info."""
+
+    name: str
+    """The link name."""
+    url: str
+    """The link URL."""
+
 
 @dataclasses.dataclass
 class Info:
@@ -115,6 +124,23 @@ class Info:
     """The club or society title."""
     about: str | None
     """Info on the club or society."""
+
+    links: list[InfoLink] | None
+    """Links provided by the club or society."""
+
+
+@dataclasses.dataclass
+class InfoAward:
+    """An award in the club or society's info."""
+
+    year: str
+    """The year the award was won."""
+    name: str
+    """The award name."""
+    winner: str
+    """The award winner."""
+    type: str
+    """The award type."""
 
 
 class Scraper:
@@ -448,3 +474,51 @@ class Scraper:
             title=title,
             about=info or None,
         )
+        
+        
+    async def fetch_awards(
+        self, site: str, id: str, group_type: GroupType
+    ) -> list[InfoAward]:
+        """Fetch awards for a club or society."""
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
+        )
+        soup = BeautifulSoup(data, "html5lib")
+        awards_table = soup.find("div", attrs={"id": "awards_table"})
+        assert isinstance(awards_table, Tag)
+    
+        awards: ResultSet[Tag] = awards_table.find_all("tr")
+        awards_list: list[InfoAward] = []
+    
+        for award in awards:
+            year = award.find("th").text.strip()
+            name_tag = award.find("td").find("b")
+            name = name_tag.text.strip() if name_tag else ""
+            winner_tag = award.find("td").find("i")
+            print(winner_tag)
+            winner = winner_tag.get("title", "").strip() if winner_tag else ""
+            type = award.find("td").find("small").text.strip().replace(":","")
+            
+            
+            awards_list.append(InfoAward(year, name, winner, type))
+
+        return awards_list
+    
+    async def fetch_links(
+        self, site: str, id: str, group_type: GroupType
+    ) -> list[InfoLink]:
+        """Fetch links for a club or society."""
+        data = await self.get(
+            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
+        )
+        soup = BeautifulSoup(data, "html5lib")
+        links_table = soup.find("div", attrs={"id": "links_table"})
+        assert isinstance(links_table, Tag)
+        links: ResultSet[Tag] = links_table.find_all("a")
+
+        links_list: list[InfoLink] = []
+        for link in links:
+            name = link.get("title") or link.text.strip()
+            links_list.append(InfoLink(name, url=link["href"]))
+
+        return links_list
