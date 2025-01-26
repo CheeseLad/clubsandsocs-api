@@ -269,7 +269,7 @@ class Scraper:
                         return d.text
 
             capacity = get_info(event_data, "max")
-            location = get_info(events_info_hidden, "location")
+            location = get_info(events_info_hidden[i], "location")
 
             description_tags: ResultSet[Tag] = events_info_hidden[i].findAll("p")
             description = "\n\n".join(
