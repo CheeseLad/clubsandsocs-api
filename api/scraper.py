@@ -421,7 +421,6 @@ class Scraper:
         site: str,
         id: str,
         group_type: GroupType,
-        links: [InfoLink] = None,
     ) -> Info:
         """Fetch info on a club or society."""
         data = await self.get(
@@ -469,14 +468,13 @@ class Scraper:
             if isinstance(img, list):
                 img = img[0]
                 
-        links = await self.fetch_links(site, id, group_type) if links is None else links
 
         return Info(
             name=name,
             icon=img,
             title=title,
             about=info or None,
-            links=await self.fetch_links(site, id, group_type),
+            links=await self.fetch_links(site, id, group_type) or None,
         )
         
         
