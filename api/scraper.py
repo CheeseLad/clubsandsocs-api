@@ -473,6 +473,7 @@ class Scraper:
             icon=img,
             title=title,
             about=info or None,
+            links=await self.fetch_links(site, id, group_type),
         )
         
         
