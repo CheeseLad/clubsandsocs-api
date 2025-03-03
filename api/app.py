@@ -8,6 +8,7 @@ from api.scraper import (
     ClubSoc,
     CommitteeMember,
     Event,
+    Fixture,
     GroupType,
     Info,
     InfoLink,
@@ -70,6 +71,15 @@ async def get_activities(
 ) -> list[Activity]:
     return await scraper.fetch_activities(site, id, type)
 
+@app.get(
+    "/{site}/{type}/{id}/fixtures", summary="Get a club or society's fixtures."
+)
+async def get_fixtures(
+    site: SITE_PARAM,
+    type: TYPE_PARAM,
+    id: ID_PARAM,
+) -> list[Fixture]:
+    return await scraper.fetch_fixtures(site, id, type)
 
 @app.get("/{site}/{type}/{id}/events", summary="Get a club or society's events.")
 async def get_events(

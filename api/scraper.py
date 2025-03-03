@@ -25,6 +25,8 @@ class EventType(enum.Enum):
     """An activity."""
     EVENT = "events"
     """An event."""
+    FIXTURE = "fixtures"
+    """A fixture."""
 
 
 HEADERS = {
@@ -45,6 +47,8 @@ class Event:
     """The event's start time."""
     end: datetime.datetime
     """The event's end time."""
+    day: str
+    """The day the event is on (`monday`, `tuesday`, etc.)."""
     cost: float
     """The event cost."""
     capacity: int | None
@@ -79,6 +83,25 @@ class Activity:
     """The activity location."""
     description: str
     """The activity description."""
+    
+@dataclasses.dataclass
+class Fixture:
+    """A fixture."""
+
+    name: str
+    """The fixture name."""
+    image: str | None
+    """The fixture poster."""
+    start: datetime.datetime
+    """The fixture's start time."""
+    competition: str
+    """The fixture competition."""
+    type: str
+    """The fixture type. Usually `HOME` or `AWAY`."""
+    location: str | None
+    """The fixture location."""
+    description: str
+    """The fixture description."""
 
 
 @dataclasses.dataclass
@@ -203,10 +226,10 @@ class Scraper:
 
         return clubsocs
 
-    async def _fetch_events_activities(
+    async def _fetch_events_activities_fixtures(
         self, site: str, id: str, group_type: GroupType, event_type: EventType
-    ) -> list[Activity | Event]:
-        """Fetch events or activities for a club or society."""
+    ) -> list[Event | Activity | Fixture]:
+        """Fetch events, activities or fixtures for a club or society."""
         data = await self.get(
             CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
         )
@@ -281,8 +304,9 @@ class Scraper:
 
             start_str = get_info(event_data, "start")
             assert start_str is not None
-            end_str = get_info(event_data, "end")
-            assert end_str is not None
+            if event_type is not EventType.FIXTURE:
+                end_str = get_info(event_data, "end")
+                #assert end_str is not None
 
             if event_type is EventType.ACTIVITY:
                 type = get_info(event_data, "activity")
@@ -308,11 +332,32 @@ class Scraper:
                         description=description,
                     )
                 )
+            elif event_type is EventType.FIXTURE:
+                type = get_info(event_data, "fixture")
+                assert type is not None
+                
+                competition = None
+                end_str = get_info(event_data, "end")
+                #assert end_str is not None
+                start = utils.str_to_datetime(start_str)
+
+                events.append(
+                    Fixture(
+                        name=event_name,
+                        image=event_image,
+                        start=start,
+                        competition=None,
+                        type=type,
+                        location=location,
+                        description=description,
+                    )
+                )
             else:
                 type = get_info(event_data, "event")
                 assert type is not None
 
                 start = utils.str_to_datetime(start_str)
+                day = start.strftime("%A").lower()
                 end = utils.str_to_datetime(end_str, start)
                 cost = get_info(event_data, "cost")
                 assert cost is not None
@@ -328,6 +373,7 @@ class Scraper:
                     Event(
                         name=event_name,
                         image=event_image,
+                        day=day,
                         start=start,
                         end=end,
                         cost=cost,
@@ -400,7 +446,7 @@ class Scraper:
         self, site: str, id: str, group_type: GroupType
     ) -> list[Activity]:
         """Fetch activities for a club or society."""
-        activities = await self._fetch_events_activities(
+        activities = await self._fetch_events_activities_fixtures(
             site, id, group_type, EventType.ACTIVITY
         )
         assert types.is_obj_list(activities, Activity)
@@ -410,11 +456,21 @@ class Scraper:
         self, site: str, id: str, group_type: GroupType
     ) -> list[Event]:
         """Fetch events for a club or society."""
-        events = await self._fetch_events_activities(
+        events = await self._fetch_events_activities_fixtures(
             site, id, group_type, EventType.EVENT
         )
         assert types.is_obj_list(events, Event)
         return events
+    
+    async def fetch_fixtures(
+        self, site: str, id: str, group_type: GroupType
+    ) -> list[Fixture]:
+        """Fetch fixtures for a club or society."""
+        fixtures = await self._fetch_events_activities_fixtures(
+            site, id, group_type, EventType.FIXTURE
+        )
+        assert types.is_obj_list(fixtures, Fixture)
+        return fixtures
 
     async def fetch_info(
         self,
