@@ -3,6 +3,10 @@ import enum
 import re
 
 import parsedatetime
+import pytz
+
+
+DUBLIN_TZ = pytz.timezone("Europe/Dublin")
 
 
 class TimePeriod(enum.Enum):
@@ -33,5 +37,9 @@ def str_to_datetime(
 
     if time_period is TimePeriod.NONE:
         raise ValueError(f"failed to parse datetime '{text}'")
+    
+    assert isinstance(time, datetime.datetime)
+    time = DUBLIN_TZ.localize(time)
+    time = time.astimezone(pytz.utc)
 
     return time
