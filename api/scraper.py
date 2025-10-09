@@ -309,12 +309,18 @@ class Scraper:
                 #assert end_str is not None
 
             if event_type is EventType.ACTIVITY:
-                type = get_info(event_data, "activity")
-                assert type is not None
+                type_ = get_info(event_data, "activity")
+                assert type_ is not None
 
-                day = get_info(event_data, "day")
+                day = get_info(event_data, "day")[:-1].lower()
                 assert day is not None
-                upcoming_date = utils.str_to_datetime(day[:-1])
+                upcoming_date = utils.str_to_datetime(day)
+
+                # if today is the same day as the activity, it is
+                # converted to a week ahead so we undo this
+                today = datetime.datetime.now(datetime.timezone.utc)
+                if upcoming_date.weekday() == today.weekday():
+                    upcoming_date -= datetime.timedelta(weeks=1)
 
                 start = utils.str_to_datetime(start_str, upcoming_date)
                 end = utils.str_to_datetime(end_str, upcoming_date)
@@ -323,18 +329,18 @@ class Scraper:
                     Activity(
                         name=event_name,
                         image=event_image,
-                        day=day[:-1].lower(),
+                        day=day,
                         start=start,
                         end=end,
                         capacity=int(capacity) if capacity is not None else capacity,
-                        type=type,
+                        type=type_,
                         location=location,
                         description=description,
                     )
                 )
             elif event_type is EventType.FIXTURE:
-                type = get_info(event_data, "fixture")
-                assert type is not None
+                type_ = get_info(event_data, "fixture")
+                assert type_ is not None
                 
                 competition = None
                 end_str = get_info(event_data, "end")
@@ -347,14 +353,14 @@ class Scraper:
                         image=event_image,
                         start=start,
                         competition=None,
-                        type=type,
+                        type=type_,
                         location=location,
                         description=description,
                     )
                 )
             else:
-                type = get_info(event_data, "event")
-                assert type is not None
+                type_ = get_info(event_data, "event")
+                assert type_ is not None
 
                 start = utils.str_to_datetime(start_str)
                 day = start.strftime("%A").lower()
@@ -378,7 +384,7 @@ class Scraper:
                         end=end,
                         cost=cost,
                         capacity=int(capacity) if capacity is not None else capacity,
-                        type=type,
+                        type=type_,
                         location=location,
                         description=description,
                     )
@@ -555,10 +561,10 @@ class Scraper:
             winner_tag = award.find("td").find("i")
             print(winner_tag)
             winner = winner_tag.get("title", "").strip() if winner_tag else ""
-            type = award.find("td").find("small").text.strip().replace(":","")
+            type_ = award.find("td").find("small").text.strip().replace(":","")
             
             
-            awards_list.append(InfoAward(year, name, winner, type))
+            awards_list.append(InfoAward(year, name, winner, type_))
 
         return awards_list
     
