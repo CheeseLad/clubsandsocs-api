@@ -3,4 +3,5 @@ beautifulsoup4==4.12.3
 fastapi==0.115.0
 html5lib==1.1
 parsedatetime==2.6
+pytz==2025.2
 uvicorn[standard]==0.31.0
