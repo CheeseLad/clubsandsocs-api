@@ -1,4 +1,4 @@
-FROM python:3.12.6-slim
+FROM python:3.13.11-slim
 
 WORKDIR /app
 
@@ -9,6 +9,6 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-EXPOSE $PORT
+EXPOSE 4000
 
-CMD python -m uvicorn api.app:app --host=0.0.0.0 --port=${PORT} --no-access-log
+CMD [ "granian", "--interface", "asgi", "api.app:app", "--loop", "uvloop", "--host", "0.0.0.0", "--port", "4000" ]

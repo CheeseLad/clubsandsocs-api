@@ -6,7 +6,5 @@ services:
     container_name: clubsandsocs-api
     hostname: clubsandsocs-api
     restart: unless-stopped
-    environment:
-      - PORT=${PORT:-4000}
     ports:
-      - ${PORT:-4000}:${PORT:-4000}
+      - ${PORT:-4000}:4000

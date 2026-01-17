@@ -50,14 +50,14 @@ SITE_PARAM: TypeAlias = Annotated[
     str,
     Path(
         description="University clubs & societies website domain.",
-        example="dcuclubsandsocs.ie",
+        examples=["dcuclubsandsocs.ie"],
     ),
 ]
 TYPE_PARAM: TypeAlias = Annotated[
-    GroupType, Path(description="Type of group.", example="society")
+    GroupType, Path(description="Type of group.", examples=["society"])
 ]
 ID_PARAM: TypeAlias = Annotated[
-    str, Path(description="ID of the club or society.", example="redbrick")
+    str, Path(description="ID of the club or society.", examples=["redbrick"])
 ]
 
 
