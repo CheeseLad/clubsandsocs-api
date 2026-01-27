@@ -139,6 +139,8 @@ class InfoLink:
 class Info:
     """Info on a club or society."""
 
+    id: str
+    """The ID used in the club or society's page URL."""
     name: str
     """The club or society name."""
     icon: str | None
@@ -532,6 +534,7 @@ class Scraper:
                 
 
         return Info(
+            id=id,
             name=name,
             icon=img,
             title=title,
