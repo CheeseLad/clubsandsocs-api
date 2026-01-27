@@ -35,7 +35,7 @@ Allows you to get information about societies and clubs from university websites
 
 1. Clone the repository
 2. Run `pip install -r requirements.txt` to install the required packages
-3. Run `uvicorn api.app:app --host=0.0.0.0 --port=4000 --no-access-log` to start the API server
+3. Run `granian --interface asgi api.app:app --loop uvloop --host 0.0.0.0 --port 4000` to start the API server
 
 ## Usage
 
