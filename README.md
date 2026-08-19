@@ -6,14 +6,16 @@ Allows you to get information about societies and clubs from university websites
 
 ## Supported Sites
 
-- [DCU Clubs & Socs](https://dcuclubsandsocs.ie)
-  - Site Code: `dcuclubsandsocs.ie`
 - [MU Clubs & Societies](https://mulife.ie/)
   - Site Code: `mulife.ie`
 - [SETU Waterford Sports Clubs & Societies](https://waterford.sportsclubsandsocieties.setu.ie/)
   - Site Code: `waterford.sportsclubsandsocieties.setu.ie`
+- [SETU Carlow Sports Clubs & Societies](https://carlow.sportsclubsandsocieties.setu.ie/)
+  - Site Code: `carlow.sportsclubsandsocieties.setu.ie`
 - [UL Clubs & Societies](https://ulwolves.ie/)
   - Site Code: `ulwolves.ie`
+- [ATU Galway-Mayo Clubs & Socs](https://galwaymayo.atusulife.ie/)
+  - Site Code: `galwaymayo.atusulife.ie`
 - [ATU Sligo Clubs & Socs](https://sligo.atusulife.ie/)
   - Site Code: `sligo.atusulife.ie`
 - [ATU Donegal Clubs & Socs](https://donegal.atusulife.ie/)
@@ -35,7 +37,8 @@ Allows you to get information about societies and clubs from university websites
 
 1. Clone the repository
 2. Run `pip install -r requirements.txt` to install the required packages
-3. Run `granian --interface asgi api.app:app --loop uvloop --host 0.0.0.0 --port 4000` to start the API server
+3. (Linux/macOS) Run `granian --interface asgi api.app:app --loop uvloop --host 0.0.0.0 --port 4000` to start the API server
+4. (Windows) Run `granian --interface asgi api.app:app --host 0.0.0.0 --port 4000` to start the API server
 
 ## Usage
 
@@ -52,7 +55,7 @@ The API has the following endpoints:
 
 - `/ulwolves.ie/society` - Get all societies in the University of Limerick
 - `/mulife.ie/club/table-tennis/activities` - Get all weekly activities for the Table Tennis Club in Maynooth University
-- `/dcuclubsandsocs.ie/society/redbrick/events` - Get all upcoming events for the Redbrick Society in DCU
+- `/carlow.sportsclubsandsocieties.setu.ie/society/science/events` - Get all upcoming events for the Science Society in SETU Carlow
 - `/mulife.ie/society/esn/committee` - Get committee information for the Erasmus Student Network Society in Maynooth University
-- `/dcuclubsandsocs.ie/society/media-production/gallery` - Get gallery photos for the Media Production Society in DCU
+- `/galwaymayo.atusulife.ie/society/galway-engineering/gallery` - Get gallery photos for the Engineering Society in ATU Galway-Mayo
 - `/ulwolves.ie/society/computer` - Get info on the Computer Society of the University of Limerick
