@@ -5,3 +5,4 @@ granian[uvloop]==2.6.1
 html5lib==1.1
 parsedatetime==2.6
 pytz==2025.2
+requests==2.34.2
