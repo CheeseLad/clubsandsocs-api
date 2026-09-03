@@ -11,7 +11,12 @@ Allows you to get information about societies and clubs from university websites
 
 Notes: 
 - Instead of society names (redbrick), use their IDs instead (14412). 
-- Only /events, /committee, /links and id endpoints are supported for Rubric sites.
+- Only the following endpoints are supported for Rubric sites:
+  - `/<site>/<type>/<id>/events` - Get all upcoming events for a club/society
+  - `/<site>/<type>/<id>/committee` - Get the committee information for a club/society
+  - `/<site>/<type>` - Get all clubs/societies for a university
+  - `/<site>/<type>/<id>` - Get info for a club/society
+  - `/<site>/<type>/<id>/links` - Get the social media links for a club/society
 
 ## Supported Sites (Assure Memberships Platform)
 
@@ -53,12 +58,15 @@ Notes:
 
 The API has the following endpoints:
 
-- `/<site>/<type>` - Get all clubs/societies for a university
 - `/<site>/<type>/<id>/activities` - Get all weekly activities for a club/society
+- `/<site>/<type>/<id>/fixtures` - Get all upcoming fixtures for a club/society
 - `/<site>/<type>/<id>/events` - Get all upcoming events for a club/society
 - `/<site>/<type>/<id>/committee` - Get the committee information for a club/society
 - `/<site>/<type>/<id>/gallery` - Get the gallery photos for a club/society
+- `/<site>/<type>` - Get all clubs/societies for a university
 - `/<site>/<type>/<id>` - Get info for a club/society
+- `/<site>/<type>/<id>/awards` - Get the awards for a club/society
+- `/<site>/<type>/<id>/links` - Get the social media links for a club/society
 
 ## API Usage Examples
 

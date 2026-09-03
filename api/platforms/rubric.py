@@ -3,7 +3,6 @@ import datetime
 import json
 import re
 import time
-import uuid
 from collections.abc import Awaitable, Callable
 
 import pytz
@@ -26,18 +25,23 @@ async def fetch_group(
     group_type: GroupType,
 ) -> list[ClubSoc]:
     """Fetch clubs or societies from a Rubric-powered site."""
-    type_str = "societies" if group_type == GroupType.SOCIETY else "clubs"
     payload = {
         "firstCall": True,
         "sortType": "itemName",
-        "desiredType": type_str,
-        "limit": 12,
+        "desiredType": "societies",
+        "state": "Leinster",
+        "country": "IE",
+        "universityid": 541,
+        "limit": 1000,
         "offset": 0,
         "sortDirection": "asc",
         "searchQuery": "",
         "eventsPeriodFilter": "All",
-        "sessionid": str(uuid.uuid4()),
-        "currentUrl": f"https://campus.hellorubric.com/search?type={type_str}",
+        "domain": "campus.hellorubric.com",
+        "currentUrl": (
+            "https://hellorubric.com/search?"
+            f"type=societies&country=IE&state=Leinster&universityid=541"
+        ),
         "device": "web_portal",
         "version": 4,
         "timestamp": int(time.time() * 1000),
