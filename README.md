@@ -2,9 +2,18 @@
 
 ## Description
 
-Allows you to get information about societies and clubs from university websites using the [Assure Memberships Platform](https://assurememberships.com) for use in other applications.
+Allows you to get information about societies and clubs from university websites using the [Assure Memberships Platform](https://assurememberships.com) or [Rubric](https://campus.hellorubric.com) for use in other applications.
 
-## Supported Sites
+## Supported Sites (Rubric Platform)
+
+- [DCU Clubs & Socs](https://campus.hellorubric.com/search?type=societies&country=IE&state=Leinster&universityid=541)
+  - Site Code: `dcuclubsandsocs.ie`
+
+Notes: 
+- Instead of society names (redbrick), use their IDs instead (14412). 
+- Only /events, /committee, /links and id endpoints are supported for Rubric sites.
+
+## Supported Sites (Assure Memberships Platform)
 
 - [MU Clubs & Societies](https://mulife.ie/)
   - Site Code: `mulife.ie`

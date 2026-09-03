@@ -1,8 +1,9 @@
 from contextlib import asynccontextmanager
-from typing import Annotated, AsyncGenerator, TypeAlias
+from typing import Annotated, AsyncGenerator, TypeAlias, Union
 
 from fastapi import FastAPI, Path
 
+from api.platforms import Platform, get_platform
 from api.scraper import (
     Activity,
     ClubSoc,
@@ -68,7 +69,9 @@ async def get_activities(
     site: SITE_PARAM,
     type: TYPE_PARAM,
     id: ID_PARAM,
-) -> list[Activity]:
+) -> Union[list[Activity], dict[str, str]]:
+    if get_platform(site) == Platform.RUBRIC:
+        return {"message": "This endpoint is not supported on Rubric sites"}
     return await scraper.fetch_activities(site, id, type)
 
 @app.get(
@@ -78,7 +81,9 @@ async def get_fixtures(
     site: SITE_PARAM,
     type: TYPE_PARAM,
     id: ID_PARAM,
-) -> list[Fixture]:
+) -> Union[list[Fixture], dict[str, str]]:
+    if get_platform(site) == Platform.RUBRIC:
+        return {"message": "This endpoint is not supported on Rubric sites"}
     return await scraper.fetch_fixtures(site, id, type)
 
 @app.get("/{site}/{type}/{id}/events", summary="Get a club or society's events.")
@@ -109,7 +114,9 @@ async def get_gallery(
     site: SITE_PARAM,
     type: TYPE_PARAM,
     id: ID_PARAM,
-) -> list[str]:
+) -> Union[list[str], dict[str, str]]:
+    if get_platform(site) == Platform.RUBRIC:
+        return {"message": "This endpoint is not supported on Rubric sites"}
     return await scraper.fetch_gallery(site, id, type)
 
 
@@ -131,7 +138,9 @@ async def get_awards(
     site: SITE_PARAM,
     type: TYPE_PARAM,
     id: ID_PARAM,
-) -> list[InfoAward]:
+) -> Union[list[InfoAward], dict[str, str]]:
+    if get_platform(site) == Platform.RUBRIC:
+        return {"message": "This endpoint is not supported on Rubric sites"}
     return await scraper.fetch_awards(site, id, type)
 
 @app.get("/{site}/{type}/{id}/links", summary="Get a club or society's list of links.")

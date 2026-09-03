@@ -189,44 +189,27 @@ class Scraper:
             r.raise_for_status()
             return await r.read()
 
+    async def post(self, url: str, data: dict[str, str]) -> bytes:
+        """Make a `POST` request to `url` with form data."""
+        async with self.session.request(
+            "POST",
+            f"https://{url}",
+            data=data,
+            headers={"Accept": "*/*"},
+        ) as r:
+            r.raise_for_status()
+            return await r.read()
+
     async def fetch_group(self, site: str, group_type: GroupType) -> list[ClubSoc]:
         """Fetch items items belonging to a group (clubs or societies)."""
-        data = await self.get(
-            site,
-        )
-        soup = BeautifulSoup(data, "html5lib")
-        results = soup.find_all(
-            "a",
-            href=re.compile(
-                r"{site}\/{group}\/.+".format(site=site, group=group_type.value)
-            ),
-        )
+        from api.platforms import Platform, get_platform
+        from api.platforms import assure, rubric
 
-        clubsocs: list[ClubSoc] = []
-        for res in results:
-            if not res.get("title"):
-                continue
-
-            name = res["title"]
-            locked = name.endswith("(awaiting committee unlock)")
-            if locked:
-                name = name.replace("(awaiting committee unlock)", "").strip()
-
-            match = re.search(
-                r"\/{group}\/(?P<id>.+)".format(group=group_type.value), res["href"]
-            )
-            if not match or not (id := match.group("id")):
-                raise ValueError(f"could not get {group_type.value} id for '{name}'")
-
-            clubsocs.append(
-                ClubSoc(
-                    id=id,
-                    name=name,
-                    is_locked=locked,
-                )
-            )
-
-        return clubsocs
+        match get_platform(site):
+            case Platform.RUBRIC:
+                return await rubric.fetch_group(self.post, site, group_type)
+            case Platform.ASSURE:
+                return await assure.fetch_group(self.get, site, group_type)
 
     async def _fetch_events_activities_fixtures(
         self, site: str, id: str, group_type: GroupType, event_type: EventType
@@ -400,28 +383,35 @@ class Scraper:
         self, site: str, id: str, group_type: GroupType
     ) -> list[CommitteeMember]:
         """Fetch committee members for a club or society."""
-        data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
-        )
+        from api.platforms import Platform, get_platform
+        from api.platforms import assure, rubric
 
-        soup = BeautifulSoup(data, "html5lib")
-        committee_table = soup.find("div", attrs={"id": "committee_table"})
-        assert isinstance(committee_table, Tag)
-        committee_roles: ResultSet[Tag] = committee_table.find_all("th")
-        committee_names: ResultSet[Tag] = committee_table.find_all("td")
-
-        committee: list[CommitteeMember] = []
-        for role, name_ in zip(committee_roles, committee_names):
-            committee.append(
-                CommitteeMember(
-                    name=None
-                    if (name := name_.text.strip()) == "(name hidden)"
-                    else name,
-                    position=role.text.strip(),
+        match get_platform(site):
+            case Platform.RUBRIC:
+                return await rubric.fetch_committee(self.post, site, group_type, id)
+            case Platform.ASSURE:
+                data = await self.get(
+                    CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
                 )
-            )
 
-        return committee
+                soup = BeautifulSoup(data, "html5lib")
+                committee_table = soup.find("div", attrs={"id": "committee_table"})
+                assert isinstance(committee_table, Tag)
+                committee_roles: ResultSet[Tag] = committee_table.find_all("th")
+                committee_names: ResultSet[Tag] = committee_table.find_all("td")
+
+                committee: list[CommitteeMember] = []
+                for role, name_ in zip(committee_roles, committee_names):
+                    committee.append(
+                        CommitteeMember(
+                            name=None
+                            if (name := name_.text.strip()) == "(name hidden)"
+                            else name,
+                            position=role.text.strip(),
+                        )
+                    )
+
+                return committee
 
     async def fetch_gallery(
         self, site: str, id: str, group_type: GroupType
@@ -464,11 +454,18 @@ class Scraper:
         self, site: str, id: str, group_type: GroupType
     ) -> list[Event]:
         """Fetch events for a club or society."""
-        events = await self._fetch_events_activities_fixtures(
-            site, id, group_type, EventType.EVENT
-        )
-        assert types.is_obj_list(events, Event)
-        return events
+        from api.platforms import Platform, get_platform
+        from api.platforms import assure, rubric
+
+        match get_platform(site):
+            case Platform.RUBRIC:
+                return await rubric.fetch_events(self.post, site, group_type, id)
+            case Platform.ASSURE:
+                events = await self._fetch_events_activities_fixtures(
+                    site, id, group_type, EventType.EVENT
+                )
+                assert types.is_obj_list(events, Event)
+                return events
     
     async def fetch_fixtures(
         self, site: str, id: str, group_type: GroupType
@@ -487,60 +484,67 @@ class Scraper:
         group_type: GroupType,
     ) -> Info:
         """Fetch info on a club or society."""
-        data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
-        )
-        soup = BeautifulSoup(data, "html5lib")
+        from api.platforms import Platform, get_platform
+        from api.platforms import assure, rubric
 
-        name = soup.find("div", attrs={"class": "section-heading text-center pt-5"})
-        assert isinstance(name, Tag)
-        name = utils.strip_whitespace(name.text)
+        match get_platform(site):
+            case Platform.RUBRIC:
+                return await rubric.fetch_info(self.post, site, group_type, id)
+            case Platform.ASSURE:
+                data = await self.get(
+                    CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
+                )
+                soup = BeautifulSoup(data, "html5lib")
 
-        table = soup.find("div", attrs={"id": "about_table"})
-        assert isinstance(table, Tag)
-        container = table.find("div", attrs={"class": "card-body"})
-        assert isinstance(container, Tag)
+                name = soup.find("div", attrs={"class": "section-heading text-center pt-5"})
+                assert isinstance(name, Tag)
+                name = utils.strip_whitespace(name.text)
 
-        about_div = container.find("div", attrs={"class": "mb-n2"})
-        if about_div:
-            assert isinstance(about_div, Tag)
-            about_div.decompose()
+                table = soup.find("div", attrs={"id": "about_table"})
+                assert isinstance(table, Tag)
+                container = table.find("div", attrs={"class": "card-body"})
+                assert isinstance(container, Tag)
 
-        infos: ResultSet[Tag] = container.find_all(recursive=False)
+                about_div = container.find("div", attrs={"class": "mb-n2"})
+                if about_div:
+                    assert isinstance(about_div, Tag)
+                    about_div.decompose()
 
-        info = "\n".join([tag.text for tag in infos])
-        info = utils.strip_whitespace(info)
+                infos: ResultSet[Tag] = container.find_all(recursive=False)
 
-        section = soup.find("section", attrs={"class": "clearfix faded-bg"})
-        assert isinstance(section, Tag)
+                info = "\n".join([tag.text for tag in infos])
+                info = utils.strip_whitespace(info)
 
-        title = section.find("div", attrs={"class": "col-12 text-center"})
-        assert isinstance(title, Tag)
-        title = utils.strip_whitespace(title.text)
+                section = soup.find("section", attrs={"class": "clearfix faded-bg"})
+                assert isinstance(section, Tag)
 
-        img_container = section.find(
-            "div", attrs={"class": "wow fadeInDown w-100 mb-3"}
-        )
-        if not img_container:
-            img = None
-        else:
-            assert isinstance(img_container, Tag)
-            img = img_container.find("img")
-            assert isinstance(img, Tag)
+                title = section.find("div", attrs={"class": "col-12 text-center"})
+                assert isinstance(title, Tag)
+                title = utils.strip_whitespace(title.text)
 
-            img = img["src"]
-            if isinstance(img, list):
-                img = img[0]
-                
+                img_container = section.find(
+                    "div", attrs={"class": "wow fadeInDown w-100 mb-3"}
+                )
+                if not img_container:
+                    img = None
+                else:
+                    assert isinstance(img_container, Tag)
+                    img = img_container.find("img")
+                    assert isinstance(img, Tag)
 
-        return Info(
-            id=id,
-            name=name,
-            icon=img,
-            title=title,
-            about=info or None,
-            links=await self.fetch_links(site, id, group_type) or None,
-        )
+                    img = img["src"]
+                    if isinstance(img, list):
+                        img = img[0]
+                        
+
+                return Info(
+                    id=id,
+                    name=name,
+                    icon=img,
+                    title=title,
+                    about=info or None,
+                    links=await self.fetch_links(site, id, group_type) or None,
+                )
         
         
     async def fetch_awards(
@@ -575,17 +579,24 @@ class Scraper:
         self, site: str, id: str, group_type: GroupType
     ) -> list[InfoLink]:
         """Fetch links for a club or society."""
-        data = await self.get(
-            CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
-        )
-        soup = BeautifulSoup(data, "html5lib")
-        links_table = soup.find("div", attrs={"id": "links_table"})
-        assert isinstance(links_table, Tag)
-        links: ResultSet[Tag] = links_table.find_all("a")
+        from api.platforms import Platform, get_platform
+        from api.platforms import assure, rubric
 
-        links_list: list[InfoLink] = []
-        for link in links:
-            name = link.get("title") or link.text.strip()
-            links_list.append(InfoLink(name, url=link["href"]))
+        match get_platform(site):
+            case Platform.RUBRIC:
+                return await rubric.fetch_links(self.post, site, group_type, id)
+            case Platform.ASSURE:
+                data = await self.get(
+                    CLUB_SOC_PATH.format(site=site, type=group_type.value, id=id)
+                )
+                soup = BeautifulSoup(data, "html5lib")
+                links_table = soup.find("div", attrs={"id": "links_table"})
+                assert isinstance(links_table, Tag)
+                links: ResultSet[Tag] = links_table.find_all("a")
 
-        return links_list
+                links_list: list[InfoLink] = []
+                for link in links:
+                    name = link.get("title") or link.text.strip()
+                    links_list.append(InfoLink(name, url=link["href"]))
+
+                return links_list
